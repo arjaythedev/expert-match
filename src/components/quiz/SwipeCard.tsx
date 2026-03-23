@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { SwipeQuestion } from "@/lib/questions";
 
 interface Props {
@@ -17,26 +18,21 @@ interface Props {
 export function SwipeCard({ question, questionIndex, totalQuestions, onAnswer, onBack, canGoBack }: Props) {
   const [exiting, setExiting] = useState<"left" | "right" | null>(null);
   const x = useMotionValue(0);
-  const cardOpacity = useMotionValue(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const cardWidth = 340;
 
-  const rotate = useTransform(x, [-cardWidth, 0, cardWidth], [-12, 0, 12]);
-  const leftOpacity = useTransform(x, [-cardWidth * 0.6, -40, 0], [1, 0.6, 0]);
-  const rightOpacity = useTransform(x, [0, 40, cardWidth * 0.6], [0, 0.6, 1]);
+  const rotate = useTransform(x, [-cardWidth, 0, cardWidth], [-8, 0, 8]);
 
   const handleSwipe = useCallback((direction: "left" | "right") => {
     if (exiting) return;
     setExiting(direction);
-    const target = direction === "left" ? -cardWidth : cardWidth;
-    animate(x, target, { type: "tween", duration: 0.15, ease: "easeOut" });
-    animate(cardOpacity, 0, {
+    const target = direction === "left" ? -cardWidth * 1.2 : cardWidth * 1.2;
+    animate(x, target, {
       type: "tween",
-      duration: 0.15,
+      duration: 0.18,
       ease: "easeOut",
       onComplete: () => {
         x.set(0);
-        cardOpacity.set(1);
         onAnswer(direction);
         setExiting(null);
       },
@@ -72,32 +68,12 @@ export function SwipeCard({ question, questionIndex, totalQuestions, onAnswer, o
       </div>
 
       {/* Swipe card area */}
-      <div ref={containerRef} className="relative flex items-center justify-center" style={{ minHeight: 340 }}>
-        {/* Left label indicator - hidden on mobile to avoid overlap */}
-        <motion.div
-          className="absolute left-0 top-1/2 -translate-y-1/2 max-w-[140px] text-right pointer-events-none z-10 hidden md:block"
-          style={{ opacity: leftOpacity }}
-        >
-          <div className="px-3 py-2 rounded-lg bg-brand-blue/20 border border-brand-blue/30">
-            <span className="text-brand-blue-light text-sm font-medium leading-tight block">{question.leftLabel}</span>
-          </div>
-        </motion.div>
-
-        {/* Right label indicator - hidden on mobile to avoid overlap */}
-        <motion.div
-          className="absolute right-0 top-1/2 -translate-y-1/2 max-w-[140px] text-left pointer-events-none z-10 hidden md:block"
-          style={{ opacity: rightOpacity }}
-        >
-          <div className="px-3 py-2 rounded-lg bg-lime/10 border border-lime/20">
-            <span className="text-lime text-sm font-medium leading-tight block">{question.rightLabel}</span>
-          </div>
-        </motion.div>
-
+      <div ref={containerRef} className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: 340 }}>
         {/* The card */}
         <motion.div
           key={question.id}
           className="w-[280px] sm:w-[340px] cursor-grab active:cursor-grabbing select-none touch-none"
-          style={{ x, rotate, opacity: cardOpacity }}
+          style={{ x, rotate }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.9}
