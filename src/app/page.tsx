@@ -122,7 +122,7 @@ export default function Home() {
                 {
                   icon: <Search className="w-5 h-5" />,
                   title: "Pick your field",
-                  description: "Tell us what you do — product, engineering, design, marketing, and more.",
+                  description: "Tell us what you do. Product, engineering, design, marketing, and more.",
                 },
                 {
                   icon: <Sparkles className="w-5 h-5" />,
@@ -178,7 +178,7 @@ export default function Home() {
               transition={{ delay: 0.15, duration: 0.6 }}
             >
               <p className="mt-8 text-lg text-white/60 leading-[1.7]">
-                The best learning happens with someone who&apos;s been where you are — someone who can see around corners, challenge your thinking, and hold you accountable.
+                The best learning happens with someone who&apos;s been where you are. Someone who can see around corners, challenge your thinking, and hold you accountable.
               </p>
               <p className="mt-4 text-lg text-white/60 leading-[1.7]">
                 We&apos;ll match you with that person.
