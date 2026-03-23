@@ -27,17 +27,10 @@ export function SwipeCard({ question, questionIndex, totalQuestions, onAnswer, o
   const handleSwipe = useCallback((direction: "left" | "right") => {
     if (exiting) return;
     setExiting(direction);
-    const target = direction === "left" ? -cardWidth * 1.5 : cardWidth * 1.5;
-    animate(x, target, {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-      onComplete: () => {
-        onAnswer(direction);
-        x.set(0);
-        setExiting(null);
-      },
-    });
+    // Fire the answer immediately so the next card appears without delay
+    x.set(0);
+    onAnswer(direction);
+    setExiting(null);
   }, [exiting, onAnswer, x]);
 
   // Keyboard support
