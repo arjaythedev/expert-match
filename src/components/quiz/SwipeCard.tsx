@@ -17,6 +17,7 @@ interface Props {
 export function SwipeCard({ question, questionIndex, totalQuestions, onAnswer, onBack, canGoBack }: Props) {
   const [exiting, setExiting] = useState<"left" | "right" | null>(null);
   const x = useMotionValue(0);
+  const cardOpacity = useMotionValue(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const cardWidth = 340;
 
@@ -28,12 +29,14 @@ export function SwipeCard({ question, questionIndex, totalQuestions, onAnswer, o
     if (exiting) return;
     setExiting(direction);
     const target = direction === "left" ? -cardWidth : cardWidth;
-    animate(x, target, {
+    animate(x, target, { type: "tween", duration: 0.15, ease: "easeOut" });
+    animate(cardOpacity, 0, {
       type: "tween",
       duration: 0.15,
       ease: "easeOut",
       onComplete: () => {
         x.set(0);
+        cardOpacity.set(1);
         onAnswer(direction);
         setExiting(null);
       },
@@ -94,7 +97,7 @@ export function SwipeCard({ question, questionIndex, totalQuestions, onAnswer, o
         <motion.div
           key={question.id}
           className="w-[280px] sm:w-[340px] cursor-grab active:cursor-grabbing select-none touch-none"
-          style={{ x, rotate }}
+          style={{ x, rotate, opacity: cardOpacity }}
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.9}
