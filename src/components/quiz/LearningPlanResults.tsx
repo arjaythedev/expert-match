@@ -23,77 +23,26 @@ export function LearningPlanResults({ learningPlan }: Props) {
       >
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-lime/20 bg-lime/5 text-lime text-sm font-medium mb-6">
           <Star className="w-4 h-4" />
-          <span>Your learning plan</span>
+          <span>Your matches</span>
         </div>
         <h2
           className="text-[28px] sm:text-[40px] font-light font-serif text-white leading-[1.15] tracking-[-1.2px]"
           style={{ fontFeatureSettings: "'ss01' 1" }}
         >
-          Here's your personalized{" "}
-          <span className="text-lime">plan</span>
+          Here are{" "}
+          <span className="text-lime">your matches</span>
         </h2>
         <p className="mt-3 text-base sm:text-lg text-white/60 max-w-lg mx-auto">
-          Based on your answers and the experts and lessons you liked, here's everything you need to level up.
+          Based on your answers and the experts and lessons you liked, here&apos;s everything you need to level up.
         </p>
       </motion.div>
-
-      {/* Experts Section */}
-      {experts.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className="mb-10"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <User className="w-4 h-4 text-lime/60" />
-            <h3 className="text-sm uppercase tracking-[0.15em] text-lime/60 font-medium">Your Experts</h3>
-          </div>
-          <div className="space-y-3">
-            {experts.map((expert, i) => (
-              <motion.div
-                key={expert.name}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.08, duration: 0.4 }}
-                className="bg-navy-900 border border-navy-700 rounded-xl p-4 sm:p-5 hover:border-navy-500 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-navy-700 flex-shrink-0 overflow-hidden border border-navy-600">
-                    <img
-                      src={expert.imgUrl}
-                      alt={expert.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(expert.name); }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="text-base font-medium text-white">{expert.name}</h4>
-                        <p className="text-sm text-white/50">{expert.title}</p>
-                      </div>
-                      {i === 0 && (
-                        <div className="flex-shrink-0 px-2 py-0.5 rounded-full bg-lime/10 border border-lime/20">
-                          <span className="text-[10px] text-lime font-medium">Top Match</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm text-white/40 leading-relaxed line-clamp-2">{expert.bio}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
 
       {/* Lightning Lessons Section */}
       {lessons.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
           className="mb-10"
         >
           <div className="flex items-center gap-2 mb-4">
@@ -138,6 +87,57 @@ export function LearningPlanResults({ learningPlan }: Props) {
                   </p>
                 )}
               </motion.a>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Experts Section */}
+      {experts.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="mb-10"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <User className="w-4 h-4 text-lime/60" />
+            <h3 className="text-sm uppercase tracking-[0.15em] text-lime/60 font-medium">Your Experts</h3>
+          </div>
+          <div className="space-y-3">
+            {experts.map((expert, i) => (
+              <motion.div
+                key={expert.name}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 + i * 0.08, duration: 0.4 }}
+                className="bg-navy-900 border border-navy-700 rounded-xl p-4 sm:p-5 hover:border-navy-500 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-navy-700 flex-shrink-0 overflow-hidden border border-navy-600">
+                    <img
+                      src={expert.imgUrl}
+                      alt={expert.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(expert.name); }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="text-base font-medium text-white">{expert.name}</h4>
+                        <p className="text-sm text-white/50">{expert.title}</p>
+                      </div>
+                      {i === 0 && (
+                        <div className="flex-shrink-0 px-2 py-0.5 rounded-full bg-lime/10 border border-lime/20">
+                          <span className="text-[10px] text-lime font-medium">Top Match</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm text-white/40 leading-relaxed line-clamp-2">{expert.bio}</p>
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>

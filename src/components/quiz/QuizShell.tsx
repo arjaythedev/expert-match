@@ -1,16 +1,15 @@
 "use client";
 
-import { useReducer, useCallback } from "react";
+import { useReducer } from "react";
 import { BackgroundGrid } from "@/components/landing/BackgroundGrid";
 import { VerticalSelect } from "./VerticalSelect";
 import { SwipeCard } from "./SwipeCard";
-import { EmailGate } from "./EmailGate";
 import { LearningPlanResults } from "./LearningPlanResults";
 import { Vertical } from "@/lib/experts";
 import { DeckCard, buildDeck } from "@/lib/card-deck";
 import { LearningPlan, computeLearningPlan } from "@/lib/learning-plan";
 
-type Step = "vertical" | "swiping" | "email" | "results";
+type Step = "vertical" | "swiping" | "results";
 
 interface QuizState {
   step: Step;
@@ -28,8 +27,7 @@ interface QuizState {
 type QuizAction =
   | { type: "SELECT_VERTICAL"; payload: Vertical }
   | { type: "SWIPE_CARD"; payload: { direction: "left" | "right" } }
-  | { type: "PREV_CARD" }
-  | { type: "SUBMIT_EMAIL"; payload: string };
+  | { type: "PREV_CARD" };
 
 function reducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
@@ -78,6 +76,10 @@ function reducer(state: QuizState, action: QuizAction): QuizState {
           likedLessons,
           likedCourses,
         );
+        // Email is always captured on the landing page
+        const storedEmail = typeof window !== "undefined"
+          ? sessionStorage.getItem("expert-match-email") || ""
+          : "";
         return {
           ...state,
           conceptAnswers,
@@ -85,7 +87,8 @@ function reducer(state: QuizState, action: QuizAction): QuizState {
           likedLessons,
           likedCourses,
           learningPlan: plan,
-          step: "email",
+          email: storedEmail,
+          step: "results",
         };
       }
 
@@ -132,9 +135,6 @@ function reducer(state: QuizState, action: QuizAction): QuizState {
       };
     }
 
-    case "SUBMIT_EMAIL":
-      return { ...state, email: action.payload, step: "results" };
-
     default:
       return state;
   }
@@ -155,10 +155,6 @@ const initialState: QuizState = {
 
 export function QuizShell() {
   const [state, dispatch] = useReducer(reducer, initialState);
-
-  const handleEmailSubmit = useCallback((email: string) => {
-    dispatch({ type: "SUBMIT_EMAIL", payload: email });
-  }, []);
 
   const currentCard = state.deck[state.currentCardIndex];
 
@@ -188,14 +184,6 @@ export function QuizShell() {
               onSwipe={(direction) => dispatch({ type: "SWIPE_CARD", payload: { direction } })}
               onBack={() => dispatch({ type: "PREV_CARD" })}
               canGoBack={true}
-            />
-          )}
-
-          {state.step === "email" && state.learningPlan && (
-            <EmailGate
-              learningPlan={state.learningPlan}
-              onSubmit={handleEmailSubmit}
-              isSubmitting={false}
             />
           )}
 
