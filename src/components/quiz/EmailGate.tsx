@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, ArrowRight, Loader2, Lock } from "lucide-react";
-import { Expert, getAvatarUrl } from "@/lib/experts";
+import { Mail, ArrowRight, Loader2, Lock, User, Zap, BookOpen } from "lucide-react";
+import { LearningPlan } from "@/lib/learning-plan";
+import { getAvatarUrl } from "@/lib/experts";
 
 interface Props {
-  experts: Expert[];
+  learningPlan: LearningPlan;
   onSubmit: (email: string) => void;
   isSubmitting: boolean;
 }
 
-export function EmailGate({ experts, onSubmit, isSubmitting }: Props) {
+export function EmailGate({ learningPlan, onSubmit, isSubmitting }: Props) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
@@ -23,6 +24,8 @@ export function EmailGate({ experts, onSubmit, isSubmitting }: Props) {
     setError("");
     onSubmit(trimmed);
   };
+
+  const { experts, lessons, courses } = learningPlan;
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 sm:px-0">
@@ -36,71 +39,77 @@ export function EmailGate({ experts, onSubmit, isSubmitting }: Props) {
           className="text-[28px] sm:text-[36px] font-light font-serif text-white leading-[1.2] tracking-[-1.2px] mb-3"
           style={{ fontFeatureSettings: "'ss01' 1" }}
         >
-          Your experts are{" "}
+          Your learning plan is{" "}
           <span className="text-lime">ready.</span>
         </h2>
         <p className="text-white/60 text-base sm:text-lg">
-          We found {experts.length} expert{experts.length !== 1 ? "s" : ""} matched to your profile. Enter your email to reveal them.
+          {experts.length} experts, {lessons.length} lessons, and {courses.length} courses matched to your profile.
         </p>
       </motion.div>
 
-      {/* Blurred expert cards */}
+      {/* Blurred preview cards */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, duration: 0.5 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8"
       >
-        {experts.slice(0, 3).map((expert, i) => (
-          <motion.div
-            key={expert.name}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
-            className="relative bg-navy-900 border border-navy-700 rounded-xl p-5 overflow-hidden"
-          >
-            {/* Blur overlay */}
-            <div className="absolute inset-0 backdrop-blur-md bg-navy-950/60 z-10 flex items-center justify-center">
-              <div className="flex items-center gap-2 text-white/40">
-                <Lock className="w-4 h-4" />
-                <span className="text-sm font-medium">Locked</span>
+        {/* Expert preview */}
+        {experts[0] && (
+          <div className="relative bg-navy-900 border border-navy-700 rounded-xl p-4 overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-navy-950/60 z-10 flex flex-col items-center justify-center gap-1">
+              <Lock className="w-4 h-4 text-white/30" />
+              <span className="text-xs text-white/30 font-medium">Locked</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2 text-lime/40">
+              <User className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wider">Expert</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-navy-700 overflow-hidden">
+                <img src={experts[0].imgUrl} alt="" className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(experts[0].name); }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm text-white truncate">{experts[0].name}</p>
+                <p className="text-[10px] text-white/40 truncate">{experts[0].title}</p>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Blurred content */}
-            <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-full bg-navy-700 flex-shrink-0 overflow-hidden">
-                <img
-                  src={expert.imgUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = getAvatarUrl(expert.name);
-                  }}
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-white truncate">{expert.name}</p>
-                <p className="text-xs text-white/50 truncate">{expert.title}</p>
-                <p className="mt-2 text-xs text-white/40 line-clamp-2">{expert.bio}</p>
-              </div>
+        {/* Lesson preview */}
+        {lessons[0] && (
+          <div className="relative bg-navy-900 border border-navy-700 rounded-xl p-4 overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-navy-950/60 z-10 flex flex-col items-center justify-center gap-1">
+              <Lock className="w-4 h-4 text-white/30" />
+              <span className="text-xs text-white/30 font-medium">Locked</span>
             </div>
-          </motion.div>
-        ))}
+            <div className="flex items-center gap-2 mb-2 text-brand-blue-light/40">
+              <Zap className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wider">Lesson</span>
+            </div>
+            <p className="text-sm text-white line-clamp-2">{lessons[0].title}</p>
+            <p className="text-[10px] text-white/40 mt-1">{lessons[0].instructorName}</p>
+          </div>
+        )}
+
+        {/* Course preview */}
+        {courses[0] && (
+          <div className="relative bg-navy-900 border border-navy-700 rounded-xl p-4 overflow-hidden">
+            <div className="absolute inset-0 backdrop-blur-md bg-navy-950/60 z-10 flex flex-col items-center justify-center gap-1">
+              <Lock className="w-4 h-4 text-white/30" />
+              <span className="text-xs text-white/30 font-medium">Locked</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2 text-brand-blue-light/40">
+              <BookOpen className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wider">Course</span>
+            </div>
+            <p className="text-sm text-white line-clamp-2">{courses[0].name}</p>
+            <p className="text-[10px] text-white/40 mt-1">{courses[0].instructorName}</p>
+          </div>
+        )}
       </motion.div>
-
-      {/* Remaining count indicator */}
-      {experts.length > 3 && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center text-sm text-white/30 mb-6"
-        >
-          + {experts.length - 3} more expert{experts.length - 3 !== 1 ? "s" : ""} waiting
-        </motion.p>
-      )}
 
       {/* Email form */}
       <motion.div
@@ -133,11 +142,11 @@ export function EmailGate({ experts, onSubmit, isSubmitting }: Props) {
             {isSubmitting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Unlocking your experts...
+                Building your plan...
               </>
             ) : (
               <>
-                Unlock My Experts
+                Unlock My Learning Plan
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

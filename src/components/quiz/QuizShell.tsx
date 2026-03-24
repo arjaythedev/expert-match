@@ -5,65 +5,131 @@ import { BackgroundGrid } from "@/components/landing/BackgroundGrid";
 import { VerticalSelect } from "./VerticalSelect";
 import { SwipeCard } from "./SwipeCard";
 import { EmailGate } from "./EmailGate";
-import { ExpertResults } from "./ExpertResults";
-import { Vertical, Expert, matchExperts, QuizAnswers } from "@/lib/experts";
-import { QUESTIONS } from "@/lib/questions";
+import { LearningPlanResults } from "./LearningPlanResults";
+import { Vertical } from "@/lib/experts";
+import { DeckCard, buildDeck } from "@/lib/card-deck";
+import { LearningPlan, computeLearningPlan } from "@/lib/learning-plan";
 
-type Step = "vertical" | "questions" | "email" | "results";
+type Step = "vertical" | "swiping" | "email" | "results";
 
 interface QuizState {
   step: Step;
   vertical: Vertical | null;
-  currentQuestionIndex: number;
-  answers: Record<string, "left" | "right">;
+  deck: DeckCard[];
+  currentCardIndex: number;
+  conceptAnswers: Record<string, "left" | "right">;
+  likedExperts: string[];
+  likedLessons: string[];
+  likedCourses: string[];
   email: string;
-  experts: Expert[];
+  learningPlan: LearningPlan | null;
 }
 
 type QuizAction =
   | { type: "SELECT_VERTICAL"; payload: Vertical }
-  | { type: "ANSWER_QUESTION"; payload: { questionId: string; answer: "left" | "right" } }
-  | { type: "PREV_QUESTION" }
-  | { type: "SUBMIT_EMAIL"; payload: string }
-  | { type: "SET_SUBMITTING"; payload: boolean };
+  | { type: "SWIPE_CARD"; payload: { direction: "left" | "right" } }
+  | { type: "PREV_CARD" }
+  | { type: "SUBMIT_EMAIL"; payload: string };
 
 function reducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
-    case "SELECT_VERTICAL":
-      return { ...state, vertical: action.payload, step: "questions", currentQuestionIndex: 0 };
-
-    case "ANSWER_QUESTION": {
-      const newAnswers = { ...state.answers, [action.payload.questionId]: action.payload.answer };
-      const nextIndex = state.currentQuestionIndex + 1;
-
-      if (nextIndex >= QUESTIONS.length) {
-        // All questions answered, compute experts
-        const quizAnswers: QuizAnswers = {
-          vertical: state.vertical!,
-          experience: newAnswers.experience || "left",
-          learningStyle: newAnswers.learningStyle || "left",
-          workStyle: newAnswers.workStyle || "left",
-          careerGoal: newAnswers.careerGoal || "left",
-          needType: newAnswers.needType || "left",
-          accountability: newAnswers.accountability || "left",
-          urgency: newAnswers.urgency || "left",
-          commitment: newAnswers.commitment || "left",
-          perspective: newAnswers.perspective || "left",
-          coachingVibe: newAnswers.coachingVibe || "left",
-          expertType: newAnswers.expertType || "left",
-        };
-        const experts = matchExperts(quizAnswers);
-        return { ...state, answers: newAnswers, experts, step: "email" };
-      }
-
-      return { ...state, answers: newAnswers, currentQuestionIndex: nextIndex };
+    case "SELECT_VERTICAL": {
+      const deck = buildDeck(action.payload);
+      return {
+        ...state,
+        vertical: action.payload,
+        deck,
+        currentCardIndex: 0,
+        step: "swiping",
+      };
     }
 
-    case "PREV_QUESTION": {
-      if (state.currentQuestionIndex <= 0) {
+    case "SWIPE_CARD": {
+      const card = state.deck[state.currentCardIndex];
+      if (!card) return state;
+
+      const dir = action.payload.direction;
+      let conceptAnswers = state.conceptAnswers;
+      let likedExperts = state.likedExperts;
+      let likedLessons = state.likedLessons;
+      let likedCourses = state.likedCourses;
+
+      switch (card.cardType) {
+        case "concept":
+          conceptAnswers = { ...conceptAnswers, [card.questionId]: dir };
+          break;
+        case "expert":
+          if (dir === "right") likedExperts = [...likedExperts, `${card.expertIndex}-${card.name}`];
+          break;
+        case "lesson":
+          if (dir === "right") likedLessons = [...likedLessons, card.lessonId];
+          break;
+        case "course":
+          if (dir === "right") likedCourses = [...likedCourses, card.courseId];
+          break;
+      }
+
+      const nextIndex = state.currentCardIndex + 1;
+      if (nextIndex >= state.deck.length) {
+        const plan = computeLearningPlan(
+          state.vertical!,
+          conceptAnswers,
+          likedExperts,
+          likedLessons,
+          likedCourses,
+        );
+        return {
+          ...state,
+          conceptAnswers,
+          likedExperts,
+          likedLessons,
+          likedCourses,
+          learningPlan: plan,
+          step: "email",
+        };
+      }
+
+      return {
+        ...state,
+        conceptAnswers,
+        likedExperts,
+        likedLessons,
+        likedCourses,
+        currentCardIndex: nextIndex,
+      };
+    }
+
+    case "PREV_CARD": {
+      if (state.currentCardIndex <= 0) {
         return { ...state, step: "vertical" };
       }
-      return { ...state, currentQuestionIndex: state.currentQuestionIndex - 1 };
+      // Remove last answer for the card we're going back from
+      const prevIndex = state.currentCardIndex - 1;
+      const prevCard = state.deck[prevIndex];
+      let conceptAnswers = { ...state.conceptAnswers };
+      let likedExperts = [...state.likedExperts];
+      let likedLessons = [...state.likedLessons];
+      let likedCourses = [...state.likedCourses];
+
+      if (prevCard.cardType === "concept") {
+        delete conceptAnswers[prevCard.questionId];
+      } else if (prevCard.cardType === "expert") {
+        const key = `${prevCard.expertIndex}-${prevCard.name}`;
+        likedExperts = likedExperts.filter(id => id !== key);
+      } else if (prevCard.cardType === "lesson") {
+        likedLessons = likedLessons.filter(id => id !== prevCard.lessonId);
+      } else if (prevCard.cardType === "course") {
+        likedCourses = likedCourses.filter(id => id !== prevCard.courseId);
+      }
+
+      return {
+        ...state,
+        conceptAnswers,
+        likedExperts,
+        likedLessons,
+        likedCourses,
+        currentCardIndex: prevIndex,
+      };
     }
 
     case "SUBMIT_EMAIL":
@@ -77,27 +143,29 @@ function reducer(state: QuizState, action: QuizAction): QuizState {
 const initialState: QuizState = {
   step: "vertical",
   vertical: null,
-  currentQuestionIndex: 0,
-  answers: {},
+  deck: [],
+  currentCardIndex: 0,
+  conceptAnswers: {},
+  likedExperts: [],
+  likedLessons: [],
+  likedCourses: [],
   email: "",
-  experts: [],
+  learningPlan: null,
 };
 
 export function QuizShell() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const handleEmailSubmit = useCallback((email: string) => {
-    // Simulate a brief loading state then reveal
     dispatch({ type: "SUBMIT_EMAIL", payload: email });
   }, []);
 
-  const currentQuestion = QUESTIONS[state.currentQuestionIndex];
+  const currentCard = state.deck[state.currentCardIndex];
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <BackgroundGrid />
 
-      {/* Fixed top navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-navy-950 border-b border-navy-700 shadow-[0px_5px_14px_0px_rgba(0,0,0,0.05),0px_2px_6px_0px_rgba(0,0,0,0.05)]">
         <div className="max-w-[1440px] mx-auto h-full px-6 sm:px-12 flex items-center justify-between">
           <a href="/">
@@ -106,36 +174,33 @@ export function QuizShell() {
         </div>
       </nav>
 
-      {/* Center bordered column */}
       <div className="relative z-10 flex-1 flex items-center justify-center border-l border-r border-navy-700 max-w-[1100px] mx-auto w-full mt-[72px] bg-navy-950">
         <div className="w-full px-4 sm:px-12 py-12">
           {state.step === "vertical" && (
             <VerticalSelect onSelect={(v) => dispatch({ type: "SELECT_VERTICAL", payload: v })} />
           )}
 
-          {state.step === "questions" && currentQuestion && (
+          {state.step === "swiping" && currentCard && (
             <SwipeCard
-              question={currentQuestion}
-              questionIndex={state.currentQuestionIndex}
-              totalQuestions={QUESTIONS.length}
-              onAnswer={(answer) =>
-                dispatch({ type: "ANSWER_QUESTION", payload: { questionId: currentQuestion.id, answer } })
-              }
-              onBack={() => dispatch({ type: "PREV_QUESTION" })}
+              card={currentCard}
+              cardIndex={state.currentCardIndex}
+              totalCards={state.deck.length}
+              onSwipe={(direction) => dispatch({ type: "SWIPE_CARD", payload: { direction } })}
+              onBack={() => dispatch({ type: "PREV_CARD" })}
               canGoBack={true}
             />
           )}
 
-          {state.step === "email" && (
+          {state.step === "email" && state.learningPlan && (
             <EmailGate
-              experts={state.experts}
+              learningPlan={state.learningPlan}
               onSubmit={handleEmailSubmit}
               isSubmitting={false}
             />
           )}
 
-          {state.step === "results" && (
-            <ExpertResults experts={state.experts} />
+          {state.step === "results" && state.learningPlan && (
+            <LearningPlanResults learningPlan={state.learningPlan} />
           )}
         </div>
       </div>
